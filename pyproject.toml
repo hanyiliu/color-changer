@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "color-changer"
+version = "0.1.1"
+description = "CLI tool to batch replace specific colors in images (raster + SVG)."
+authors = [{name = "Your Name"}]
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+keywords = ["image", "color", "cli", "svg", "batch"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent"
+]
+dependencies = [
+  "Pillow>=10.0.0",
+]
+
+[project.scripts]
+color-changer = "color_changer.cli:main"
+
+[tool.setuptools]
+packages = ["color_changer"]
