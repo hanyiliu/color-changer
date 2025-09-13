@@ -9,6 +9,7 @@ Batch replace chosen colors across mixed image formats (SVG + raster) via a simp
 - Outputs all raster images as PNG (lossless) into output folder
 - Logs per-file replacement counts + summary
 - Interactive mode for ad‑hoc mappings
+- Recursive: processes all files under the input directory tree and preserves subdirectory structure in the output.
 
 ## Setup & Installation
 
@@ -76,6 +77,7 @@ Short forms like `#f0d` expand to full 6-digit. Alpha supported (#rrggbbaa) for 
 ## Notes
 - Raster replacement matches exact RGBA tuples after converting image to RGBA. Near-color / fuzzy matching is not implemented (future enhancement: delta-E threshold).
 - SVG replacement finds literal hex codes in element attributes and inline styles. Does not parse functional color notations (e.g. `rgb(255,0,0)`), gradients, or CSS external stylesheets yet.
+- Output directory mirrors the input tree; raster outputs always use `.png` extension even if source was jpeg/gif/etc.
 
 ## Planned Enhancements
 - Optional fuzzy color distance tolerance

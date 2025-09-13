@@ -105,29 +105,35 @@ def process_svg(path: Path, mappings: Dict[str, str]) -> Tuple[str, Dict[str, in
     return new_text, counts
 
 
-def process_file(path: Path, out_dir: Path, mappings: Dict[str, str]) -> Tuple[int, Dict[str, int]]:
+def process_file(path: Path, in_root: Path, out_root: Path, mappings: Dict[str, str]) -> Tuple[int, Dict[str, int]]:
+    """Process a single file preserving relative directory structure.
+
+    Raster outputs are forced to PNG but keep the same relative path (with extension change).
+    """
+    rel_parent = path.parent.relative_to(in_root)
+    target_dir = out_root / rel_parent
+    target_dir.mkdir(parents=True, exist_ok=True)
     ext = path.suffix.lower()
     if ext == SVG_EXT:
         new_text, counts = process_svg(path, mappings)
-        rel = path.name
-        (out_dir / rel).write_text(new_text, encoding='utf-8')
-        replaced_total = sum(counts.values())
-        return replaced_total, counts
+        out_path = target_dir / path.name
+        out_path.write_text(new_text, encoding='utf-8')
+        return sum(counts.values()), counts
     elif ext in SUPPORTED_RASTER_EXT:
         img = load_image(path)
         new_img, counts = replace_colors_raster(img, mappings)
-        rel = path.with_suffix('.png').name  # output raster as PNG
-        new_img.save(out_dir / rel)
-        replaced_total = sum(counts.values())
-        return replaced_total, counts
+        out_name = path.with_suffix('.png').name
+        out_path = target_dir / out_name
+        new_img.save(out_path)
+        return sum(counts.values()), counts
     else:
-        # Unsupported - just copy
-        shutil.copy2(path, out_dir / path.name)
+        shutil.copy2(path, target_dir / path.name)
         return 0, {}
 
 
 def scan_input_files(in_dir: Path) -> List[Path]:
-    return [p for p in in_dir.iterdir() if p.is_file()]
+    # Recurse into all subdirectories
+    return [p for p in in_dir.rglob('*') if p.is_file()]
 
 
 def parse_args(argv: List[str]) -> argparse.Namespace:
@@ -171,17 +177,18 @@ def main(argv: List[str] | None = None) -> int:
         return 1
 
     files = scan_input_files(in_dir)
-    print(f"Processing {len(files)} files with {len(mappings)} mappings...")
+    print(f"Processing {len(files)} files (recursive) with {len(mappings)} mappings...")
 
     aggregate_counts = {src: 0 for src in mappings}
     processed = 0
     for f in files:
-        replaced_total, counts = process_file(f, out_dir, mappings)
+        replaced_total, counts = process_file(f, in_dir, out_dir, mappings)
         processed += 1
         if counts:
             for k, v in counts.items():
                 aggregate_counts[k] += v
-        print(f"{f.name}: replaced={replaced_total}")
+        rel_display = f.relative_to(in_dir)
+        print(f"{rel_display}: replaced={replaced_total}")
 
     print('\nSummary:')
     for k, v in aggregate_counts.items():
